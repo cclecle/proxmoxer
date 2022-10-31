@@ -215,7 +215,7 @@ class ProxmoxHttpSession(requests.Session):
                 total_file_size += get_file_size(v)
 
                 # add in filename from file pointer (patch for https://github.com/requests/toolbelt/pull/316)
-                files[k] = (requests.utils.guess_filename(v), v)
+                files[k] = (requests.utils.guess_filename(v), v, 'text/plain')
                 del data[k]
 
         # if there are any large files, send all data and files using streaming multipart encoding
