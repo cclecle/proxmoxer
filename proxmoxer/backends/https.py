@@ -54,7 +54,7 @@ class ProxmoxHTTPAuthBase(AuthBase):
     def get_tokens(self):
         return None, None
 
-    def __init__(self, timeout=5, service="PVE", verify_ssl=False):
+    def __init__(self, timeout=30, service="PVE", verify_ssl=False):
         self.timeout = timeout
         self.service = service
         self.verify_ssl = verify_ssl
