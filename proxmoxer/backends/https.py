@@ -19,6 +19,7 @@ logger.setLevel(level=logging.WARNING)
 
 STREAMING_SIZE_THRESHOLD = 10 * 1024 * 1024  # 10 MiB
 SSL_OVERFLOW_THRESHOLD = 2147483135  # 2^31 - 1 - 512
+DEF_Upload_CT_MiniSpeed_Miips = 2
 
 try:
     import requests
@@ -179,9 +180,6 @@ class ProxmoxHttpSession(requests.Session):
         if verify is None:
             verify = a.verify_ssl
 
-        if timeout is None:
-            timeout = a.timeout
-
         # pull cookies from auth if not present
         if (not c) and a:
             cookies = a.get_cookies()
@@ -203,7 +201,11 @@ class ProxmoxHttpSession(requests.Session):
                 # add in filename from file pointer (patch for https://github.com/requests/toolbelt/pull/316)
                 files[k] = (requests.utils.guess_filename(v), v, 'application/octet-stream')
                 del data[k]
-
+                
+        logger.debug(
+            f"Measured upload file size: {total_file_size}"
+        )
+        
         # if there are any large files, send all data and files using streaming multipart encoding
         if total_file_size > STREAMING_SIZE_THRESHOLD:
             try:
@@ -225,7 +227,21 @@ class ProxmoxHttpSession(requests.Session):
                     logger.info(
                         "Installing 'requests_toolbelt' will decrease memory used during upload"
                     )
+                    
 
+        logger.debug(
+            f"Estimating min bandwidth of {DEF_Upload_CT_MiniSpeed_Miips}MiiB/s"
+        )
+               
+        if timeout is None:
+            timeout = estimatedMaxTimeSec
+        else:
+            MinSpeed=DEF_Upload_CT_MiniSpeed_Miips*1024*1024
+            timeout    = int(total_file_size / (MinSpeed))
+            logger.debug(
+                f"Estimating upload max time: {timeout:.2f}s"
+            )
+        
         return super().request(
             method,
             url,
