@@ -234,14 +234,16 @@ class ProxmoxHttpSession(requests.Session):
         )
                
         if timeout is None:
-            timeout = estimatedMaxTimeSec
-        else:
             MinSpeed=DEF_Upload_CT_MiniSpeed_Miips*1024*1024
             timeout    = int(total_file_size / (MinSpeed))
+        else:
             logger.debug(
-                f"Estimating upload max time: {timeout:.2f}s"
+                f"upload max time forced"
             )
-        
+        logger.info(
+            f"upload max time: {timeout:.2f}s"
+        )
+            
         return super().request(
             method,
             url,
