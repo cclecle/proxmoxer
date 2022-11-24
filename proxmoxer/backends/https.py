@@ -234,6 +234,11 @@ class ProxmoxHttpSession(requests.Session):
         )
                
         if timeout is None:
+            if total_file_size > 0:
+                MinSpeed=DEF_Upload_CT_MiniSpeed_Miips*1024*1024
+                timeout    = int(total_file_size / (MinSpeed))
+            else:
+                timeout = a.timeout
             MinSpeed=DEF_Upload_CT_MiniSpeed_Miips*1024*1024
             timeout    = int(total_file_size / (MinSpeed))
         else:
