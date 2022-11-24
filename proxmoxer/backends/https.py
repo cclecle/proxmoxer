@@ -232,21 +232,22 @@ class ProxmoxHttpSession(requests.Session):
         logger.debug(
             f"Estimating min bandwidth of {DEF_Upload_CT_MiniSpeed_Miips}MiiB/s"
         )
-               
+
         if timeout is None:
             if total_file_size > 0:
+                logger.debug(
+                    f"computing timeout based on total_file_size"
+                )
                 MinSpeed=DEF_Upload_CT_MiniSpeed_Miips*1024*1024
                 timeout    = int(total_file_size / (MinSpeed))
             else:
                 timeout = a.timeout
-            MinSpeed=DEF_Upload_CT_MiniSpeed_Miips*1024*1024
-            timeout    = int(total_file_size / (MinSpeed))
         else:
             logger.debug(
-                f"upload max time forced"
+                f"command timeout forced"
             )
-        logger.info(
-            f"upload max time: {timeout:.2f}s"
+        logger.debug(
+            f"command max time: {timeout:.2f}s"
         )
             
         return super().request(
