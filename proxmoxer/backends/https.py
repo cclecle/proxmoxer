@@ -25,6 +25,7 @@ try:
     import requests
     from requests.auth import AuthBase
     from requests.cookies import cookiejar_from_dict
+    from requests.adapters import HTTPAdapter, Retry
 except ImportError:
     logger.error("Chosen backend requires 'requests' module\n")
     sys.exit(1)
@@ -235,22 +236,24 @@ class ProxmoxHttpSession(requests.Session):
 
         if timeout is None:
             if total_file_size > 0:
-                logger.debug(
-                    f"computing timeout based on total_file_size"
-                )
-                MinSpeed=DEF_Upload_CT_MiniSpeed_Miips*1024*1024
-                timeout    = int(total_file_size / (MinSpeed))
+                logger.debug(f"computing timeout based on total_file_size")
+                MinSpeed    = DEF_Upload_CT_MiniSpeed_Miips*1024*1024
+                timeout     = int(total_file_size / (MinSpeed))
             else:
                 timeout = a.timeout
         else:
-            logger.debug(
-                f"command timeout forced"
-            )
-        logger.debug(
-            f"command max time: {timeout:.2f}s"
-        )
-            
-        return super().request(
+            logger.debug(f"command timeout forced")
+        logger.debug(f"command max time: {timeout:.2f}s")
+        
+        if total_file_size > STREAMING_SIZE_THRESHOLD:
+            retries = Retry(    total = 8,
+                                backoff_factor = 1,
+                                status = 0,
+                                other = 5,
+                                allowed_methods  = ["POST"])
+            self.mount('https://', HTTPAdapter(max_retries=retries))
+        
+        _resp = super().request(
             method,
             url,
             params,
@@ -267,7 +270,11 @@ class ProxmoxHttpSession(requests.Session):
             verify,
             cert,
         )
-
+        
+        if total_file_size > STREAMING_SIZE_THRESHOLD:
+            self.mount('https://', HTTPAdapter())
+        
+        return _resp
 
 class Backend(object):
     def __init__(
